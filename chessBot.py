@@ -4,46 +4,45 @@
 import numpy as np
 from colorama import Fore, Back
 
-# ----------------------------------------------CONSTANTS---------------------------------------------------------------
-PAWN_VAL = 1
-KNIGHT_VAL = 3
-BISHOP_VAL = 3.5
-ROOK_VAL = 5
-QUEEN_VAL = 9
+# ---------------------------------------------CONSTANTS / DICTIONARIES-------------------------------------------------
 # + is white, - is black, 0 is empty
 # Square key:
-# 0=EMPTY, 1=Pawn, 2=Knight, 3=Bishop, 4=Rook, 5=Queen, 6=Queen
+pieceNums = np.array([" ", "Pawn", "Knight", "Bishop", "Rook", "Queen", "King"])
+materialDict = {"Pawn": 1, "Knight": 3, "Bishop": 3, "Rook": 5, "Queen": 9}
+factorWeights = {"Material": 1, "Control": 1, "Structure": 1, "King Safety": 1.5}
 
-# ----------------------------------------------------SETUP BOARD-------------------------------------------------------
-board = np.zeros((8, 8), dtype=np.int8)
+# -------------------------------------------------BOARD FUNCTIONS------------------------------------------------------
 def setupBoard():
+    board = np.zeros((8, 8), dtype=np.int8)
     for side in [1, -1]:
         for pawn in range(8):
             y = np.int8(3.5 + 2.5 * -side)
-            board[pawn, y] = side
+            board[y, pawn] = side
         y = np.int8(3.5 + 3.5 * -side)
-        board[0, y] = 4 * side
-        board[7, y] = 4 * side
-        board[1, y] = 2 * side
-        board[6, y] = 2 * side
-        board[2, y] = 3 * side
-        board[5, y] = 3 * side
-        board[3, y] = 5 * side
-        board[4, y] = 6 * side
+        board[y, 0] = 4 * side
+        board[y, 7] = 4 * side
+        board[y, 1] = 2 * side
+        board[y, 6] = 2 * side
+        board[y, 2] = 3 * side
+        board[y, 5] = 3 * side
+        board[y, 3] = 5 * side
+        board[y, 4] = 6 * side
+    return board
 
-# ----------------------------------------------------DISPLAY BOARD-----------------------------------------------------
-def printBoard():
+def printBoard(board):
     print("  " + f"\033[4m{" "*25}\033[0m")
     for y in range(8):
         print(8-y, end=' ')
         for x in range(8):
-            val = board[x][-1-y]
+            val = board[-1-y, x]
             print(Back.RESET + "|", end='')
             back = (x + y % 2) % 2
             print([Back.WHITE, Back.BLACK][back], end='')
             print([Fore.BLACK, Fore.WHITE][back], end='')
             side = int(val/abs(val)+1) if not val == 0 else 1
-            print(f"\033[4m{"B W"[side] + " PNBRQK"[abs(val)]}\033[0m", end='')
+            piece = pieceNums[abs(val)]
+            piece = "N" if piece == "Knight" else piece[0]
+            print(f"\033[4m{"B W"[side] + piece}\033[0m", end='')
         print(Back.RESET + "|")
     letters = ""
     for l in range(8):
@@ -51,9 +50,26 @@ def printBoard():
     print("  " + letters)
 
 
+# ----------------------------------------------------MAIN FUNCTIONS----------------------------------------------------
+def validMove(move, board):
+    pass
+
+
 # ----------------------------------------------------ANALYZE BOARD-----------------------------------------------------
-def analyze():
-    matDiff = 0
-    for x in range(8):
-        for y in range(8):
-            continue
+def analyze(board):
+    print(f"\033[4m{""}\033[0m")
+    evaluation = 0
+    material = 0
+    for y in range(8):
+        for x in range(8):
+            piece = abs(board[y, x])
+            if 0 < piece < 6:
+                side = np.int8(board[y, x] / piece)
+                material += materialDict[pieceNums[piece]] * side
+    print(f"Material: {material:+}")
+
+    # Get final evaluation
+    evaluation += material * factorWeights["Material"]
+    print(f"* BOARD EVALUATION: {evaluation:+}")
+    print(f"\033[4m{" "*27}\033[0m\n")
+    return evaluation
